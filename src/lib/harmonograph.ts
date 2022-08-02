@@ -1,26 +1,36 @@
-export type PendulumConfig = { amplitude: number; frequency: number; decay: number; phase: number };
-export type HarmonographConfig = { xAxis: PendulumConfig; yAxis: PendulumConfig };
+export type PendulumConfig = {
+	xamplitude: number;
+	yamplitude: number;
+	xfrequency: number;
+	yfrequency: number;
+	decay: number;
+	phase: number;
+};
 
 const toRadians = (deg: number) => deg * (Math.PI / 180.0);
 
 export class Pendulum {
-	amplitude: number;
+	xamplitude: number;
+	yamplitude: number;
 	limit: number;
-	frequency: number;
+	xfrequency: number;
+	yfrequency: number;
 	phase: number;
 	decay: number;
 
 	constructor(config: PendulumConfig) {
-		this.amplitude = config.amplitude;
-		this.limit = Math.abs(config.amplitude);
-		this.frequency = toRadians(config.frequency);
+		this.xamplitude = config.xamplitude;
+		this.yamplitude = config.yamplitude;
+		this.limit = Math.max(Math.abs(config.xamplitude), Math.abs(config.yamplitude));
+		this.xfrequency = toRadians(config.xfrequency);
+		this.yfrequency = toRadians(config.yfrequency);
 		this.phase = toRadians(config.phase);
 		this.decay = config.decay;
 	}
 
 	calculate(t: number) {
-		const x = this.amplitude * Math.sin(this.frequency * t + this.phase);
-		const y = this.amplitude * Math.cos(this.frequency * t + this.phase);
+		const x = this.xamplitude * Math.cos(this.xfrequency * t + this.phase);
+		const y = this.yamplitude * Math.sin(this.yfrequency * t + this.phase);
 		const radius = Math.exp(t * this.decay * -1);
 		return { x: x * radius, y: y * radius, r: radius * this.limit };
 	}

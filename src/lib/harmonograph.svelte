@@ -1,26 +1,21 @@
 <script lang="ts">
-	import { CanvasSpace, Rectangle, Triangle, Pt, Group, Num } from 'pts';
+
+	import { CanvasSpace, Rectangle, Triangle, Pt, Group, Num, Mat } from 'pts';
 	import { onMount, onDestroy } from 'svelte';
-	import { Harmonograph, Pendulum, type HarmonographConfig } from './harmonograph';
+	import { Harmonograph, Pendulum, type PendulumConfig } from './harmonograph';
 
 	export let play: boolean = true;
 
 	let canvas: HTMLCanvasElement, space: CanvasSpace;
 	let initialPlay: boolean = true;
 
-	let config: HarmonographConfig = {
-		xAxis: { amplitude: 100, frequency: 1, decay: 0.0002, phase: 0 },
-		yAxis: { amplitude: 100, frequency: 2, decay: 0.0002, phase: 90 }
-	};
+	let pendulumConfigs: Array<PendulumConfig> = [
+		{ xamplitude: 200, yamplitude: 200, xfrequency: 1, yfrequency: 4, decay: 0.0001, phase: 0 },
+		// { xamplitude: 200, yamplitude: 200, xfrequency: 1, yfrequency: 8, decay: 0.0001, phase: 90 }
+	];
 
-	function makeHarmonograph(config: HarmonographConfig, time: number) {
-		return new Harmonograph([
-			new Pendulum(config.xAxis),
-			new Pendulum(config.yAxis)
-			// new Pendulum(220, freq1, angle * 0.0101, halflife),
-			// new Pendulum(30, freq2, 10.0 + angle * 0.0101, halflife),
-			// new Pendulum(100, freq3, angle * 0.00134, halflife)
-		]);
+	function makeHarmonograph(config: Array<PendulumConfig>) {
+		return new Harmonograph(config.map((pendulumConfig) => new Pendulum(pendulumConfig)));
 	}
 
 	function PT() {
@@ -31,20 +26,32 @@
 		let chain = new Group();
 		let center = new Pt(space.center);
 
-		const sineWave = (x: number, amplitude: number, freq: number) =>
-			amplitude * Math.sin(2 * Math.PI * freq * x) + space.center.y;
+		const MAX_POINTS = 500000;
+
+
+		//Precompute harmonograph points
+		const harm = makeHarmonograph(pendulumConfigs);
+		const points = [...Array(MAX_POINTS)].map((_, i) => {
+			let v = harm.calculate(i / 5)
+			return new Pt(v.x, v.y)
+		});
+
+		const delay = 0;
+		const pointsToRender = 10;
+		let currentFrametime = 0;
 
 		space.add((time, ftime) => {
-			if (time) {
-				// let x = time / 50;
-				// let pt = new Pt(x, sineWave(x, config.a, config.f));
-				// chain.push(pt);
+			if (time != null && ftime != null) {
+				currentFrametime += ftime;
 
-				const harm = makeHarmonograph(config, time / 5);
-				const v = harm.calculate(time / 5);
-				let pt = new Pt(v.x, v.y);
-				chain.push(pt.$add(space.center));
-				form.strokeOnly('#123', 0.5).line(chain);
+				if (currentFrametime >= delay) {
+					chain.push(...points.splice(0, pointsToRender).map(v => v.add(space.center)));
+
+					form.stroke("#555", 0.5).point(chain.slice(-1)[0], 1)
+					form.strokeOnly('#aaa', 0.5).line(chain);
+
+					currentFrametime = 0;
+				}
 			}
 		});
 
@@ -52,65 +59,51 @@
 	}
 
 	onMount(() => PT());
-
 </script>
 
 <canvas id="hello" />
 <div id="controls">
-	<div>
-		<h3>X Axis</h3>
+	{#each pendulumConfigs as config, i}
 		<div>
-			<label>
-				Amplitude
-				<input type="range" bind:value={config.xAxis.amplitude} min="0" max="400" />
-			</label>
+			<h3>Pendulum {i + 1}</h3>
+			<div>
+				<label>
+					X Amplitude
+					<input type="number" bind:value={config.xamplitude} min="0" max="400" />
+				</label>
+			</div>
+			<div>
+				<label>
+					Y Amplitude
+					<input type="number" bind:value={config.yamplitude} min="0" max="400" />
+				</label>
+			</div>
+			<div>
+				<label>
+					X Frequency
+					<input type="number" bind:value={config.xfrequency} min="0" max="10" step="0.5" />
+				</label>
+			</div>
+			<div>
+				<label>
+					Y Frequency
+					<input type="number" bind:value={config.yfrequency} min="0" max="10" step="0.5" />
+				</label>
+			</div>
+			<div>
+				<label>
+					Decay
+					<input type="number" bind:value={config.decay} min="0" max="0.05" step="0.001" />
+				</label>
+			</div>
+			<div>
+				<label>
+					Phase
+					<input type="number" bind:value={config.phase} min="0" max="180" step="1" />
+				</label>
+			</div>
 		</div>
-		<div>
-			<label>
-				Frequency
-				<input type="range" bind:value={config.xAxis.frequency} min="0" max="10" step="0.5" />
-			</label>
-		</div>
-		<div>
-			<label>
-				Decay
-				<input type="range" bind:value={config.xAxis.decay} min="0" max="0.05" step="0.001" />
-			</label>
-		</div>
-		<div>
-			<label>
-				Phase
-				<input type="range" bind:value={config.xAxis.phase} min="0" max="180" step="1" />
-			</label>
-		</div>
-	</div>
-	<div>
-		<h3>Y Axis</h3>
-		<div>
-			<label>
-				Amplitude
-				<input type="range" bind:value={config.yAxis.amplitude} min="0" max="400" />
-			</label>
-		</div>
-		<div>
-			<label>
-				Frequency
-				<input type="range" bind:value={config.yAxis.frequency} min="0" max="10" step="0.5" />
-			</label>
-		</div>
-		<div>
-			<label>
-				Decay
-				<input type="range" bind:value={config.yAxis.decay} min="0" max="0.05" step="0.001" />
-			</label>
-		</div>
-		<div>
-			<label>
-				Phase
-				<input type="range" bind:value={config.yAxis.phase} min="0" max="180" step="1" />
-			</label>
-		</div>
-	</div>
+	{/each}
 </div>
 
 <style>
