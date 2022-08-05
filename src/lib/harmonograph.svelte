@@ -1,16 +1,22 @@
 <script lang="ts">
-
-	import { CanvasSpace, Rectangle, Triangle, Pt, Group, Num, Mat } from 'pts';
 	import { onMount, onDestroy } from 'svelte';
+	import {
+		Scene,
+		WebGLRenderer,
+		PerspectiveCamera,
+		LineBasicMaterial,
+		Vector3,
+		BufferGeometry,
+		Line
+	} from 'three';
+	import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+
 	import { Harmonograph, Pendulum, type PendulumConfig } from './harmonograph';
 
 	export let play: boolean = true;
 
-	let canvas: HTMLCanvasElement, space: CanvasSpace;
-	let initialPlay: boolean = true;
-
 	let pendulumConfigs: Array<PendulumConfig> = [
-		{ xamplitude: 200, yamplitude: 200, xfrequency: 1, yfrequency: 4, decay: 0.0001, phase: 0 },
+		{ xamplitude: 200, yamplitude: 200, xfrequency: 1, yfrequency: 4, decay: 0.0001, phase: 0 }
 		// { xamplitude: 200, yamplitude: 200, xfrequency: 1, yfrequency: 8, decay: 0.0001, phase: 90 }
 	];
 
@@ -18,47 +24,41 @@
 		return new Harmonograph(config.map((pendulumConfig) => new Pendulum(pendulumConfig)));
 	}
 
-	function PT() {
-		space = new CanvasSpace('#hello');
-		space.setup({ bgcolor: '#fff' });
+	function THREE() {
+		const canvas = document.getElementById('hello') as HTMLCanvasElement;
 
-		const form = space.getForm();
-		let chain = new Group();
-		let center = new Pt(space.center);
+		const renderer = new WebGLRenderer({ canvas });
+		renderer.setSize(canvas.clientWidth, canvas.clientHeight);
+
+		const camera = new PerspectiveCamera(45, canvas.clientWidth / canvas.clientHeight, 1, 600);
+		camera.position.set(0, 0, 500);
+		camera.lookAt(0, 0, 0);
+
+		const scene = new Scene();
 
 		const MAX_POINTS = 500000;
-
 
 		//Precompute harmonograph points
 		const harm = makeHarmonograph(pendulumConfigs);
 		const points = [...Array(MAX_POINTS)].map((_, i) => {
-			let v = harm.calculate(i / 5)
-			return new Pt(v.x, v.y)
+			let v = harm.calculate(i / 5);
+			return new Vector3(v.x, v.y, 0);
 		});
 
-		const delay = 0;
-		const pointsToRender = 10;
-		let currentFrametime = 0;
+		//create a blue LineBasicMaterial
+		const material = new LineBasicMaterial({ color: 0x0000ff });
 
-		space.add((time, ftime) => {
-			if (time != null && ftime != null) {
-				currentFrametime += ftime;
+		const geometry = new BufferGeometry().setFromPoints(points);
 
-				if (currentFrametime >= delay) {
-					chain.push(...points.splice(0, pointsToRender).map(v => v.add(space.center)));
+		const line = new Line(geometry, material);
 
-					form.stroke("#555", 0.5).point(chain.slice(-1)[0], 1)
-					form.strokeOnly('#aaa', 0.5).line(chain);
+		scene.add(line);
+		renderer.render(scene, camera);
 
-					currentFrametime = 0;
-				}
-			}
-		});
-
-		space.play();
+		const controls = new OrbitControls(camera, renderer.domElement);
 	}
 
-	onMount(() => PT());
+	onMount(() => THREE());
 </script>
 
 <canvas id="hello" />
@@ -108,8 +108,8 @@
 
 <style>
 	canvas {
-		width: 80vw;
-		height: 70vh;
+		width: 90vw;
+		height: 90vh;
 		border: 3px solid red;
 	}
 
