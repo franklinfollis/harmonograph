@@ -7,11 +7,13 @@
 		LineBasicMaterial,
 		Vector3,
 		BufferGeometry,
-		Line
+		Line,
+		MathUtils
 	} from 'three';
 	import Stats from 'three/examples/jsm/libs/stats.module';
 	import { TrackballControls } from 'three/examples/jsm/controls/TrackballControls.js';
 	import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+	import { CinematicCamera } from 'three/examples/jsm/cameras/CinematicCamera.js';
 
 	import { Harmonograph, Pendulum, type PendulumConfig } from './harmonograph';
 
@@ -24,7 +26,7 @@
 			zamplitude: 60,
 			xfrequency: 1,
 			yfrequency: 3,
-			zfrequency: 10,
+			zfrequency: 2,
 			decay: 0.0001,
 			phase: 0
 		}
@@ -51,8 +53,55 @@
 		const renderer = new WebGLRenderer({ canvas, antialias: true });
 		renderer.setSize(canvas.clientWidth, canvas.clientHeight);
 
-		const camera = new PerspectiveCamera(45, canvas.clientWidth / canvas.clientHeight, 1, 5000);
+		const camera = new CinematicCamera(45, canvas.clientWidth / canvas.clientHeight, 1, 5000);
+		camera.setLens(5);
 		camera.position.set(0, 0, 600);
+
+		const effectController = {
+			focalLength: 15,
+			// jsDepthCalculation: true,
+			// shaderFocus: false,
+			//
+			fstop: 16,
+			// maxblur: 1.0,
+			//
+			showFocus: false,
+			focalDepth: 3
+			// manualdof: false,
+			// vignetting: false,
+			// depthblur: false,
+			//
+			// threshold: 0.5,
+			// gain: 2.0,
+			// bias: 0.5,
+			// fringe: 0.7,
+			//
+			// focalLength: 35,
+			// noise: true,
+			// pentagon: false,
+			//
+			// dithering: 0.0001
+		};
+
+		const matChanger = function () {
+			for (const e in effectController) {
+				if (e in camera.postprocessing.bokeh_uniforms) {
+					camera.postprocessing.bokeh_uniforms[e].value = effectController[e];
+				}
+			}
+
+			camera.postprocessing.bokeh_uniforms['znear'].value = camera.near;
+			camera.postprocessing.bokeh_uniforms['zfar'].value = camera.far;
+			camera.setLens(
+				effectController.focalLength,
+				camera.getFilmHeight(),
+				effectController.fstop,
+				camera.coc
+			);
+			effectController['focalDepth'] = camera.postprocessing.bokeh_uniforms['focalDepth'].value;
+		};
+
+		matChanger();
 
 		const controls = new OrbitControls(camera, renderer.domElement);
 		controls.update();
@@ -90,16 +139,35 @@
 			amountToAdd += 3;
 		}, 10);
 
+		const radius = 200;
+		let theta = 0;
+
 		function animate() {
+			theta += 0.1;
+
+			camera.position.x = radius * Math.sin(MathUtils.degToRad(theta));
+			camera.position.y = radius * Math.sin(MathUtils.degToRad(theta));
+			camera.position.z = radius * Math.cos(MathUtils.degToRad(theta));
+			camera.lookAt(scene.position);
+
+			camera.updateMatrixWorld();
+
 			line.geometry.setDrawRange(0, amountToAdd);
 			line.geometry.attributes.position.needsUpdate = true;
 
 			requestAnimationFrame(animate);
 
-			camera.rotateZ(1);
 			controls.update();
 
-			renderer.render(scene, camera);
+			if (camera.postprocessing.enabled) {
+				camera.renderCinematic(scene, renderer);
+			} else {
+				scene.overrideMaterial = null;
+
+				renderer.clear();
+				renderer.render(scene, camera);
+			}
+
 			stats.update();
 		}
 
