@@ -11,14 +11,33 @@
 	} from 'three';
 	import Stats from 'three/examples/jsm/libs/stats.module';
 	import { TrackballControls } from 'three/examples/jsm/controls/TrackballControls.js';
+	import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
 	import { Harmonograph, Pendulum, type PendulumConfig } from './harmonograph';
 
 	export let play: boolean = true;
 
 	let pendulumConfigs: Array<PendulumConfig> = [
-		{ xamplitude: 200, yamplitude: 200, xfrequency: 1, yfrequency: 3, decay: 0.0001, phase: 0 }
-		// { xamplitude: 200, yamplitude: 200, xfrequency: 1, yfrequency: 2, decay: 0.0001, phase: 90 }
+		{
+			xamplitude: 200,
+			yamplitude: 200,
+			zamplitude: 60,
+			xfrequency: 1,
+			yfrequency: 3,
+			zfrequency: 10,
+			decay: 0.0001,
+			phase: 0
+		}
+		// {
+		// 	xamplitude: 200,
+		// 	yamplitude: 200,
+		// 	zamplitude: 60,
+		// 	xfrequency: 1,
+		// 	yfrequency: 3,
+		// 	zfrequency: 4,
+		// 	decay: 0.0001,
+		// 	phase: 90
+		// }
 	];
 
 	function makeHarmonograph(config: Array<PendulumConfig>) {
@@ -27,15 +46,16 @@
 
 	function THREE() {
 		const canvas = document.getElementById('hello') as HTMLCanvasElement;
-		const context = canvas.getContext('webgl2') as WebGLRenderingContext;
+		const context = canvas.getContext('webgl2', { antialias: true }) as WebGLRenderingContext;
 
 		const renderer = new WebGLRenderer({ canvas, antialias: true });
 		renderer.setSize(canvas.clientWidth, canvas.clientHeight);
 
-		const camera = new PerspectiveCamera(45, canvas.clientWidth / canvas.clientHeight, 1, 600);
+		const camera = new PerspectiveCamera(45, canvas.clientWidth / canvas.clientHeight, 1, 5000);
 		camera.position.set(0, 0, 600);
 
-		const controls = new TrackballControls(camera, renderer.domElement);
+		const controls = new OrbitControls(camera, renderer.domElement);
+		controls.update();
 
 		const stats = Stats();
 		canvas.appendChild(stats.dom);
@@ -44,8 +64,6 @@
 		controls.zoomSpeed = 1.2;
 		controls.panSpeed = 0.8;
 
-		controls.keys = ['KeyA', 'KeyS', 'KeyD'];
-
 		const scene = new Scene();
 
 		const MAX_POINTS = 500000;
@@ -53,14 +71,14 @@
 		//Precompute harmonograph points
 		const harm = makeHarmonograph(pendulumConfigs);
 		let points = [...Array(MAX_POINTS)].map((_, i) => {
-			let v = harm.calculate(i / 5);
-			return new Vector3(v.x, v.y, 0);
+			let v = harm.calculate(i / 2);
+			return new Vector3(v.x, v.y, v.z);
 		});
 
 		let amountToAdd = 50;
 
 		//create a blue LineBasicMaterial
-		const material = new LineBasicMaterial({ color: 0x0000ff });
+		const material = new LineBasicMaterial({ color: 0xffffff, linewidth: 0.01, opacity: 0.4 });
 
 		let geometry = new BufferGeometry().setFromPoints(points);
 
@@ -70,15 +88,16 @@
 
 		setInterval(() => {
 			amountToAdd += 3;
-		}, 1);
+		}, 10);
 
 		function animate() {
 			line.geometry.setDrawRange(0, amountToAdd);
 			line.geometry.attributes.position.needsUpdate = true;
 
-			camera.rotateZ(0.001);
-
 			requestAnimationFrame(animate);
+
+			camera.rotateZ(1);
+			controls.update();
 
 			renderer.render(scene, camera);
 			stats.update();
@@ -88,6 +107,7 @@
 	}
 
 	onMount(() => THREE());
+	onDestroy(() => console.log('destroyed!'));
 </script>
 
 <canvas id="hello" />
