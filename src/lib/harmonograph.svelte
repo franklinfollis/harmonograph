@@ -23,23 +23,23 @@
 		{
 			xamplitude: 200,
 			yamplitude: 200,
-			zamplitude: 60,
+			zamplitude: 600,
 			xfrequency: 1,
-			yfrequency: 3,
-			zfrequency: 2,
+			yfrequency: 5,
+			zfrequency: 1,
 			decay: 0.0001,
 			phase: 0
+		},
+		{
+			xamplitude: 200,
+			yamplitude: 8,
+			zamplitude: 5,
+			xfrequency: 1,
+			yfrequency: 3,
+			zfrequency: 5,
+			decay: -0.0001,
+			phase: 90
 		}
-		// {
-		// 	xamplitude: 200,
-		// 	yamplitude: 200,
-		// 	zamplitude: 60,
-		// 	xfrequency: 1,
-		// 	yfrequency: 3,
-		// 	zfrequency: 4,
-		// 	decay: 0.0001,
-		// 	phase: 90
-		// }
 	];
 
 	function makeHarmonograph(config: Array<PendulumConfig>) {
@@ -136,10 +136,10 @@
 		scene.add(line);
 
 		setInterval(() => {
-			amountToAdd += 3;
+			amountToAdd += 30;
 		}, 10);
 
-		const radius = 200;
+		const radius = 1000;
 		let theta = 0;
 
 		function animate() {
