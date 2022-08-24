@@ -23,21 +23,21 @@
 		{
 			xamplitude: 200,
 			yamplitude: 200,
-			zamplitude: 600,
+			zamplitude: 0,
 			xfrequency: 1,
 			yfrequency: 5,
-			zfrequency: 1,
+			zfrequency: 0,
 			decay: 0.0001,
 			phase: 0
 		},
 		{
-			xamplitude: 200,
-			yamplitude: 8,
-			zamplitude: 5,
-			xfrequency: 1,
+			xamplitude: 0,
+			yamplitude: 200,
+			zamplitude: 200,
+			xfrequency: 0,
 			yfrequency: 3,
-			zfrequency: 5,
-			decay: -0.0001,
+			zfrequency: 2,
+			decay: 0.0001,
 			phase: 90
 		}
 	];
@@ -62,7 +62,7 @@
 			// jsDepthCalculation: true,
 			// shaderFocus: false,
 			//
-			fstop: 16,
+			fstop: 8,
 			// maxblur: 1.0,
 			//
 			showFocus: false,
@@ -178,56 +178,82 @@
 	onDestroy(() => console.log('destroyed!'));
 </script>
 
-<canvas id="hello" />
-<div id="controls">
-	{#each pendulumConfigs as config, i}
-		<div>
-			<h3>Pendulum {i + 1}</h3>
+<main>
+	<canvas id="hello" />
+	<div id="controls">
+		{#each pendulumConfigs as config, i}
 			<div>
-				<label>
-					X Amplitude
-					<input type="number" bind:value={config.xamplitude} min="0" max="400" />
-				</label>
+				<h3 class="text-md font-bold underline">Pendulum {i + 1}</h3>
+				<div>
+					<label>
+						X Amplitude
+						<input
+							class="form-input px-4 py-3 rounded-full"
+							type="number"
+							bind:value={config.xamplitude}
+							min="0"
+							max="400"
+						/>
+					</label>
+				</div>
+				<div>
+					<label>
+						Y Amplitude
+						<input
+							class="form-input px-4 py-3 rounded-full"
+							type="number"
+							bind:value={config.yamplitude}
+							min="0"
+							max="400"
+						/>
+					</label>
+				</div>
+				<div>
+					<label>
+						X Frequency
+						<input
+							class="form-input px-4 py-3 rounded-full"
+							type="number"
+							bind:value={config.xfrequency}
+							min="0"
+							max="10"
+							step="0.5"
+						/>
+					</label>
+				</div>
+				<div>
+					<label>
+						Y Frequency
+						<input type="number" bind:value={config.yfrequency} min="0" max="10" step="0.5" />
+					</label>
+				</div>
+				<div>
+					<label>
+						Decay
+						<input type="number" bind:value={config.decay} min="0" max="0.05" step="0.001" />
+					</label>
+				</div>
+				<div>
+					<label>
+						Phase
+						<input type="number" bind:value={config.phase} min="0" max="180" step="1" />
+					</label>
+				</div>
 			</div>
-			<div>
-				<label>
-					Y Amplitude
-					<input type="number" bind:value={config.yamplitude} min="0" max="400" />
-				</label>
-			</div>
-			<div>
-				<label>
-					X Frequency
-					<input type="number" bind:value={config.xfrequency} min="0" max="10" step="0.5" />
-				</label>
-			</div>
-			<div>
-				<label>
-					Y Frequency
-					<input type="number" bind:value={config.yfrequency} min="0" max="10" step="0.5" />
-				</label>
-			</div>
-			<div>
-				<label>
-					Decay
-					<input type="number" bind:value={config.decay} min="0" max="0.05" step="0.001" />
-				</label>
-			</div>
-			<div>
-				<label>
-					Phase
-					<input type="number" bind:value={config.phase} min="0" max="180" step="1" />
-				</label>
-			</div>
-		</div>
-	{/each}
-</div>
+		{/each}
+	</div>
+</main>
 
 <style>
+	main {
+		display: flex;
+		width: 100vw;
+		align-items: center;
+		justify-content: center;
+	}
 	canvas {
-		width: 90vw;
-		height: 90vh;
-		border: 3px solid red;
+		height: 100vh;
+		width: 100vw;
 	}
 
 	#controls {
@@ -236,6 +262,10 @@
 		border: 1px solid #cdcdcd;
 		border-radius: 5px;
 		display: flex;
+		flex-direction: column;
+		position: fixed;
+		right: 10px;
+		background-color: white;
 	}
 
 	#controls > div {
