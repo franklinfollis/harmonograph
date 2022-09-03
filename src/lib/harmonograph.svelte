@@ -8,7 +8,9 @@
 		Vector3,
 		BufferGeometry,
 		Line,
-		MathUtils
+		MathUtils,
+		AxesHelper,
+		Fog
 	} from 'three';
 	import Stats from 'three/examples/jsm/libs/stats.module';
 	import { TrackballControls } from 'three/examples/jsm/controls/TrackballControls.js';
@@ -26,7 +28,8 @@
 	let harmConfig = {
 		cinematic: true,
 		radius: 1000,
-		drawSpeed: 30,
+		rotationSpeed: 0.1,
+		drawSpeed: 5,
 		pendulumConfigs: [
 			{
 				xamplitude: 200,
@@ -34,6 +37,16 @@
 				zamplitude: 200,
 				xfrequency: 1,
 				yfrequency: 4,
+				zfrequency: 2,
+				decay: -0.0001,
+				phase: 0
+			},
+			{
+				xamplitude: 400,
+				yamplitude: 200,
+				zamplitude: 200,
+				xfrequency: 1,
+				yfrequency: 7,
 				zfrequency: 2,
 				decay: 0.0001,
 				phase: 0
@@ -106,12 +119,20 @@
 		controls.enablePan = false;
 		controls.update();
 
-		const stats = Stats();
-		canvas.appendChild(stats.dom);
-
+		controls.enableDamping = true;
+		controls.dampingFactor = 0.05;
 		controls.rotateSpeed = 1.0;
 		controls.zoomSpeed = 1.2;
-		controls.panSpeed = 0.8;
+
+		const controls2 = new TrackballControls(camera, renderer.domElement);
+		controls2.noRotate = true;
+		controls2.noPan = true;
+		controls2.noZoom = false;
+		controls2.zoomSpeed = 3;
+		controls2.dynamicDampingFactor = 0.1; // set dampening factor
+
+		const stats = Stats();
+		canvas.appendChild(stats.dom);
 
 		const scene = new Scene();
 
@@ -130,7 +151,7 @@
 		let amountToAdd = 50;
 
 		//create a blue LineBasicMaterial
-		const material = new LineBasicMaterial({ color: 0xffffff, linewidth: 0.01, opacity: 0.4 });
+		const material = new LineBasicMaterial({ color: 0xffffff, linewidth: 0.01, opacity: 0.01 });
 
 		let bufferGeometry = new BufferGeometry().setFromPoints(points);
 		let lineGeometry = new LineGeometry().setPositions(positions);
@@ -154,9 +175,13 @@
 
 		let line = bufferLine;
 
+		scene.fog = new Fog(0x000000, 0, 3000);
+
 		scene.add(line);
+		scene.add(new AxesHelper(50));
 
 		controls.update();
+		controls2.update();
 
 		camera.lookAt(scene.position);
 
@@ -172,9 +197,15 @@
 			if (harmConfig.cinematic) {
 				theta += 0.1;
 
-				camera.position.x += Math.sin(MathUtils.degToRad(theta));
-				camera.position.y += Math.sin(MathUtils.degToRad(theta));
-				camera.position.z += Math.cos(MathUtils.degToRad(theta));
+				let currentRadius = camera.position.distanceTo(new Vector3());
+
+				console.log(currentRadius);
+				console.log(harmConfig.rotationSpeed);
+
+				camera.position.x += harmConfig.rotationSpeed * Math.sin(MathUtils.degToRad(theta));
+				camera.position.y += harmConfig.rotationSpeed * Math.cos(MathUtils.degToRad(theta));
+				// camera.position.z =
+				// 	harmConfig.rotationSpeed * currentRadius * Math.sin(MathUtils.degToRad(theta));
 			}
 
 			camera.lookAt(scene.position);
@@ -187,6 +218,7 @@
 			requestAnimationFrame(animate);
 
 			controls.update();
+			controls2.update();
 
 			if (camera.postprocessing.enabled) {
 				camera.renderCinematic(scene, renderer);
@@ -221,6 +253,22 @@
 				for="default-checkbox"
 				class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">Rotate</label
 			>
+		</div>
+		<div class="flex flex-col justify-center">
+			<label
+				for="rotation-speed"
+				class="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-300"
+				>Rotation Speed</label
+			>
+			<input
+				id="rotation-speed"
+				class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+				type="range"
+				bind:value={harmConfig.rotationSpeed}
+				min={0}
+				max={0.99}
+				step="0.1"
+			/>
 		</div>
 		<div class="flex flex-col justify-center">
 			<label
