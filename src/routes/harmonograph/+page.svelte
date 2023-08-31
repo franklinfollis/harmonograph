@@ -23,7 +23,7 @@
 
 	import { Harmonograph, Pendulum, type PendulumConfig } from './harmonograph';
 
-	export let play: boolean = true;
+	export const play = true;
 
 	let harmConfig = {
 		cinematic: true,
@@ -70,15 +70,15 @@
 		camera.position.set(harmConfig.radius, harmConfig.radius, harmConfig.radius);
 
 		const effectController = {
-			focalLength: 15,
+			focalLength: { value: 15},
 			// jsDepthCalculation: true,
 			// shaderFocus: false,
 			//
-			fstop: 8,
+			fstop: { value: 8},
 			// maxblur: 1.0,
 			//
-			showFocus: false,
-			focalDepth: 3
+			showFocus: { value: false},
+			focalDepth: { value: 3}
 			// manualdof: false,
 			// vignetting: false,
 			// depthblur: false,
@@ -96,18 +96,20 @@
 		};
 
 		const matChanger = function () {
-			for (const e in effectController) {
-				if (e in camera.postprocessing.bokeh_uniforms) {
-					camera.postprocessing.bokeh_uniforms[e].value = effectController[e];
-				}
-			}
+			camera.postprocessing.bokeh_uniforms = { ...camera.postprocessing.bokeh_uniforms, ...effectController }
+
+			// for (const e in effectController) {
+			// 	if (e in camera.postprocessing.bokeh_uniforms) {
+			// 		camera.postprocessing.bokeh_uniforms[e].value = effectController[e];
+			// 	}
+			// }
 
 			camera.postprocessing.bokeh_uniforms['znear'].value = camera.near;
 			camera.postprocessing.bokeh_uniforms['zfar'].value = camera.far;
 			camera.setLens(
-				effectController.focalLength,
+				effectController.focalLength.value,
 				camera.getFilmHeight(),
-				effectController.fstop,
+				effectController.fstop.value,
 				camera.coc
 			);
 			effectController['focalDepth'] = camera.postprocessing.bokeh_uniforms['focalDepth'].value;
@@ -131,7 +133,7 @@
 		controls2.zoomSpeed = 3;
 		controls2.dynamicDampingFactor = 0.1; // set dampening factor
 
-		const stats = Stats();
+		const stats = new Stats();
 		canvas.appendChild(stats.dom);
 
 		const scene = new Scene();
