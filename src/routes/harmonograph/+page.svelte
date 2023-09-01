@@ -65,20 +65,20 @@
 		const renderer = new WebGLRenderer({ canvas, antialias: true });
 		renderer.setSize(canvas.clientWidth, canvas.clientHeight);
 
-		const camera = new CinematicCamera(45, canvas.clientWidth / canvas.clientHeight, 1, 5000);
+		const camera = new CinematicCamera(45, canvas.clientWidth / canvas.clientHeight, 1, 500000);
 		camera.setLens(5);
 		camera.position.set(harmConfig.radius, harmConfig.radius, harmConfig.radius);
 
 		const effectController = {
-			focalLength: { value: 15},
+			focalLength: { value: 15 },
 			// jsDepthCalculation: true,
 			// shaderFocus: false,
 			//
-			fstop: { value: 8},
-			// maxblur: 1.0,
+			fstop: { value: 80 },
+			maxblur: { value: 0.1 },
 			//
-			showFocus: { value: false},
-			focalDepth: { value: 3}
+			showFocus: { value: false },
+			focalDepth: { value: 300 }
 			// manualdof: false,
 			// vignetting: false,
 			// depthblur: false,
@@ -96,13 +96,10 @@
 		};
 
 		const matChanger = function () {
-			camera.postprocessing.bokeh_uniforms = { ...camera.postprocessing.bokeh_uniforms, ...effectController }
-
-			// for (const e in effectController) {
-			// 	if (e in camera.postprocessing.bokeh_uniforms) {
-			// 		camera.postprocessing.bokeh_uniforms[e].value = effectController[e];
-			// 	}
-			// }
+			camera.postprocessing.bokeh_uniforms = {
+				...camera.postprocessing.bokeh_uniforms,
+				...effectController
+			};
 
 			camera.postprocessing.bokeh_uniforms['znear'].value = camera.near;
 			camera.postprocessing.bokeh_uniforms['zfar'].value = camera.far;
@@ -374,10 +371,10 @@
 	main {
 		display: flex;
 		width: 100vw;
-		align-items: center;
-		justify-content: center;
 	}
 	canvas {
+		position: absolute;
+		top: 0;
 		height: 100vh;
 		width: 100vw;
 	}

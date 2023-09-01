@@ -25,6 +25,9 @@
 			<li aria-current={$page.url.pathname.startsWith('/sverdle') ? 'page' : undefined}>
 				<a href="/sverdle">Sverdle</a>
 			</li>
+			<li aria-current={$page.url.pathname === '/harmonograph' ? 'page' : undefined}>
+				<a href="/harmonograph">Harmonograph</a>
+			</li>
 		</ul>
 		<svg viewBox="0 0 2 3" aria-hidden="true">
 			<path d="M0,0 L0,3 C0.5,3 0.5,3 1,2 L2,0 Z" />
@@ -41,7 +44,9 @@
 <style>
 	header {
 		display: flex;
+		position: relative;
 		justify-content: space-between;
+		z-index: 10;
 	}
 
 	.corner {
